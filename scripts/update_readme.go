@@ -130,7 +130,7 @@ func parseMarkdownGoal(filePath string) (string, string) {
 	}
 
 	if scanner.Err() != nil {
-		panic(err)
+		panic(scanner.Err())
 	}
 
 	goal := strings.Join(goalLines, "\n")
