@@ -29,3 +29,12 @@ write a cli tool that reads a csv file of quiz questions, prompts the user for a
 - **summary:** [quiz/quiz.md](./quiz/quiz.md)
 - **file:** [quiz/main.go](./quiz/main.go)
 
+### [wikipedia mapreduce](./wikipedia-mapreduce)
+write a cli tool that downloads wikipedia articlees and finds the most frequently used words
+
+- **summary:** [wikipedia-mapreduce/wikipedia-mapreduce.md](./wikipedia-mapreduce/wikipedia-mapreduce.md)
+- **file:** [wikipedia-mapreduce/api.go](./wikipedia-mapreduce/api.go)
+- **file:** [wikipedia-mapreduce/main.go](./wikipedia-mapreduce/main.go)
+- **file:** [wikipedia-mapreduce/structs.go](./wikipedia-mapreduce/structs.go)
+- **file:** [wikipedia-mapreduce/workers.go](./wikipedia-mapreduce/workers.go)
+
