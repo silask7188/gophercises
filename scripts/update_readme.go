@@ -9,12 +9,18 @@ import (
 	"strings"
 )
 
+type CodeFile struct {
+	Name      string
+	LineCount int
+}
+
 type Exercise struct {
 	DirName     string
 	Title       string
 	Goal        string
 	SummaryFile string
-	CodeFiles   []string
+	CodeFiles   []CodeFile
+	TotalLines  int
 	HasCode     bool
 }
 
@@ -60,6 +66,21 @@ func scanWorkspace(rootDir string) []Exercise {
 	return exercises
 }
 
+func countLines(filePath string) int {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return 0
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lines := 0
+	for scanner.Scan() {
+		lines++
+	}
+	return lines
+}
+
 func parseExercise(dirPath, dirName string) Exercise {
 	ex := Exercise{
 		DirName: dirName,
@@ -79,7 +100,10 @@ func parseExercise(dirPath, dirName string) Exercise {
 					ex.Goal = goal
 				}
 			} else if !e.IsDir() && strings.HasSuffix(e.Name(), ".go") {
-				ex.CodeFiles = append(ex.CodeFiles, e.Name())
+				filePath := filepath.Join(dirPath, e.Name())
+				lines := countLines(filePath)
+				ex.CodeFiles = append(ex.CodeFiles, CodeFile{Name: e.Name(), LineCount: lines})
+				ex.TotalLines += lines
 				ex.HasCode = true
 			}
 		}
@@ -139,20 +163,30 @@ func parseMarkdownGoal(filePath string) (string, string) {
 
 func generateReadme(readmePath string, exercises []Exercise) {
 	var sb strings.Builder
+	totalRepoLines := 0
+
+	for _, ex := range exercises {
+		totalRepoLines += ex.TotalLines
+	}
 
 	sb.WriteString("# gophercises & go projects\n\n")
 	sb.WriteString("solutions and notes for go coding exercises\n\n")
+	sb.WriteString(fmt.Sprintf("total lines of code: ``%d``\n\n", totalRepoLines))
 	sb.WriteString("## solutions\n\n")
 
 	for _, ex := range exercises {
-		sb.WriteString(fmt.Sprintf("### [%s](./%s)\n", ex.Title, ex.DirName))
+		if ex.TotalLines > 0 {
+			sb.WriteString(fmt.Sprintf("### [%s](./%s) — ``%d lines``\n", ex.Title, ex.DirName, ex.TotalLines))
+		} else {
+			sb.WriteString(fmt.Sprintf("### [%s](./%s)\n", ex.Title, ex.DirName))
+		}
 		sb.WriteString(fmt.Sprintf("%s\n\n", ex.Goal))
 
 		if ex.SummaryFile != "" {
 			sb.WriteString(fmt.Sprintf("- **summary:** [%s/%s](./%s/%s)\n", ex.DirName, ex.SummaryFile, ex.DirName, ex.SummaryFile))
 		}
 		for _, codeFile := range ex.CodeFiles {
-			sb.WriteString(fmt.Sprintf("- **file:** [%s/%s](./%s/%s)\n", ex.DirName, codeFile, ex.DirName, codeFile))
+			sb.WriteString(fmt.Sprintf("- **file:** [%s/%s](./%s/%s) (``%d lines``)\n", ex.DirName, codeFile.Name, ex.DirName, codeFile.Name, codeFile.LineCount))
 		}
 		sb.WriteString("\n")
 	}
