@@ -19,6 +19,9 @@ use multiple go source files
 - ``workers.go`` contains the dispatcher and worker logic
 
 - **summary:** [news-summary/news-summary.md](./news-summary/news-summary.md)
+- **main:** [news-summary/api.go](./news-summary/api.go)
+- **main:** [news-summary/main.go](./news-summary/main.go)
+- **main:** [news-summary/workers.go](./news-summary/workers.go)
 
 ### [quiz game](./quiz)
 write a cli tool that reads a csv file of quiz questions, prompts the user for answers, and tracks their score with a timer
