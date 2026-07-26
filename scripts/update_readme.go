@@ -152,7 +152,7 @@ func generateReadme(readmePath string, exercises []Exercise) {
 			sb.WriteString(fmt.Sprintf("- **summary:** [%s/%s](./%s/%s)\n", ex.DirName, ex.SummaryFile, ex.DirName, ex.SummaryFile))
 		}
 		for _, codeFile := range ex.CodeFiles {
-			sb.WriteString(fmt.Sprintf("- **main:** [%s/%s](./%s/%s)\n", ex.DirName, codeFile, ex.DirName, codeFile))
+			sb.WriteString(fmt.Sprintf("- **file:** [%s/%s](./%s/%s)\n", ex.DirName, codeFile, ex.DirName, codeFile))
 		}
 		sb.WriteString("\n")
 	}

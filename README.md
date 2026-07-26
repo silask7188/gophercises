@@ -9,7 +9,7 @@ write a cli tool that reads a list of urls from a text file and checks if they a
 use goroutines to check them concurrently
 
 - **summary:** [link-checker/link-checker.md](./link-checker/link-checker.md)
-- **main:** [link-checker/main.go](./link-checker/main.go)
+- **file:** [link-checker/main.go](./link-checker/main.go)
 
 ### [hacker news summary](./news-summary)
 write a cli tool to receive ``n`` of the top hacker news stories from their api, use concurrency
@@ -19,13 +19,13 @@ use multiple go source files
 - ``workers.go`` contains the dispatcher and worker logic
 
 - **summary:** [news-summary/news-summary.md](./news-summary/news-summary.md)
-- **main:** [news-summary/api.go](./news-summary/api.go)
-- **main:** [news-summary/main.go](./news-summary/main.go)
-- **main:** [news-summary/workers.go](./news-summary/workers.go)
+- **file:** [news-summary/api.go](./news-summary/api.go)
+- **file:** [news-summary/main.go](./news-summary/main.go)
+- **file:** [news-summary/workers.go](./news-summary/workers.go)
 
 ### [quiz game](./quiz)
 write a cli tool that reads a csv file of quiz questions, prompts the user for answers, and tracks their score with a timer
 
 - **summary:** [quiz/quiz.md](./quiz/quiz.md)
-- **main:** [quiz/main.go](./quiz/main.go)
+- **file:** [quiz/main.go](./quiz/main.go)
 
