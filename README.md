@@ -2,7 +2,7 @@
 
 solutions and notes for go coding exercises
 
-total lines of code: ``546``
+total lines of code: ``582``
 
 ## solutions
 
@@ -12,6 +12,12 @@ use goroutines to check them concurrently
 
 - **summary:** [link-checker/link-checker.md](./link-checker/link-checker.md)
 - **file:** [link-checker/main.go](./link-checker/main.go) (``113 lines``)
+
+### [distributed map reduce](./mapreduce) — ``36 lines``
+build a fault tolerant distributed mapreduce system
+
+- **summary:** [mapreduce/mapreduce.md](./mapreduce/mapreduce.md)
+- **file:** [mapreduce/main.go](./mapreduce/main.go) (``36 lines``)
 
 ### [hacker news summary](./news-summary) — ``124 lines``
 write a cli tool to receive ``n`` of the top hacker news stories from their api, use concurrency
