@@ -3,14 +3,18 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"go/parser"
+	"go/token"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 )
 
-type CodeFile struct {
+type Package struct {
 	Name      string
+	RelPath   string
 	LineCount int
 }
 
@@ -19,7 +23,7 @@ type Exercise struct {
 	Title       string
 	Goal        string
 	SummaryFile string
-	CodeFiles   []CodeFile
+	Packages    []Package
 	TotalLines  int
 	HasCode     bool
 }
@@ -54,8 +58,7 @@ func scanWorkspace(rootDir string) []Exercise {
 			continue
 		}
 
-		dirPath := filepath.Join(rootDir, name)
-		ex := parseExercise(dirPath, name)
+		ex := parseExercise(rootDir, name)
 		exercises = append(exercises, ex)
 	}
 
@@ -73,7 +76,7 @@ func countLines(filePath string) int {
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	scanner := bufio.NewScanner(file) // fix: check error im too lazy to fix ita
 	lines := 0
 	for scanner.Scan() {
 		lines++
@@ -81,37 +84,95 @@ func countLines(filePath string) int {
 	return lines
 }
 
-func parseExercise(dirPath, dirName string) Exercise {
+func getGoPackageName(filePath string) string {
+	fset := token.NewFileSet()
+	node, err := parser.ParseFile(fset, filePath, nil, parser.PackageClauseOnly)
+	if err != nil || node == nil || node.Name == nil {
+		return ""
+	}
+	return node.Name.Name
+}
+
+func parseExercise(rootDir, dirName string) Exercise {
+	dirPath := filepath.Join(rootDir, dirName)
 	ex := Exercise{
 		DirName: dirName,
 		Title:   strings.ReplaceAll(dirName, "-", " "),
 	}
 
-	entries, err := os.ReadDir(dirPath)
-	if err == nil {
-		for _, e := range entries {
-			if !e.IsDir() && strings.HasSuffix(e.Name(), ".md") {
-				ex.SummaryFile = e.Name()
-				title, goal := parseMarkdownGoal(filepath.Join(dirPath, e.Name()))
+	pkgMap := make(map[string]*Package)
+
+	_ = filepath.WalkDir(dirPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if d.IsDir() {
+			if d.Name() != dirName && strings.HasPrefix(d.Name(), ".") {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		relPath, _ := filepath.Rel(rootDir, path)
+		relDir := filepath.Dir(relPath)
+
+		if strings.HasSuffix(d.Name(), ".md") {
+			if filepath.Dir(path) == dirPath && ex.SummaryFile == "" {
+				ex.SummaryFile = d.Name()
+				title, goal := parseMarkdownGoal(path)
 				if title != "" {
 					ex.Title = title
 				}
 				if goal != "" {
 					ex.Goal = goal
 				}
-			} else if !e.IsDir() && strings.HasSuffix(e.Name(), ".go") {
-				filePath := filepath.Join(dirPath, e.Name())
-				lines := countLines(filePath)
-				ex.CodeFiles = append(ex.CodeFiles, CodeFile{Name: e.Name(), LineCount: lines})
-				ex.TotalLines += lines
-				ex.HasCode = true
+			}
+		} else if strings.HasSuffix(d.Name(), ".go") {
+			pkgName := getGoPackageName(path)
+			if pkgName == "" {
+				return nil
+			}
+			lines := countLines(path)
+			ex.TotalLines += lines
+			ex.HasCode = true
+
+			key := relDir
+			if p, exists := pkgMap[key]; exists {
+				p.LineCount += lines
+			} else {
+				pkgMap[key] = &Package{
+					Name:      pkgName,
+					RelPath:   relDir,
+					LineCount: lines,
+				}
 			}
 		}
-	}
+		return nil
+	})
 
 	if ex.Goal == "" {
 		ex.Goal = "go exercise solution"
 	}
+
+	var packages []Package
+	for _, p := range pkgMap {
+		packages = append(packages, *p)
+	}
+
+	sort.Slice(packages, func(i, j int) bool {
+		if packages[i].Name == "main" && packages[j].Name != "main" {
+			return true
+		}
+		if packages[i].Name != "main" && packages[j].Name == "main" {
+			return false
+		}
+		if packages[i].Name != packages[j].Name {
+			return packages[i].Name < packages[j].Name
+		}
+		return packages[i].RelPath < packages[j].RelPath
+	})
+
+	ex.Packages = packages
 
 	return ex
 }
@@ -185,8 +246,8 @@ func generateReadme(readmePath string, exercises []Exercise) {
 		if ex.SummaryFile != "" {
 			sb.WriteString(fmt.Sprintf("- **summary:** [%s/%s](./%s/%s)\n", ex.DirName, ex.SummaryFile, ex.DirName, ex.SummaryFile))
 		}
-		for _, codeFile := range ex.CodeFiles {
-			sb.WriteString(fmt.Sprintf("- **file:** [%s/%s](./%s/%s) (``%d lines``)\n", ex.DirName, codeFile.Name, ex.DirName, codeFile.Name, codeFile.LineCount))
+		for _, pkg := range ex.Packages {
+			sb.WriteString(fmt.Sprintf("- **package:** [%s](./%s) (``%d lines``)\n", pkg.Name, pkg.RelPath, pkg.LineCount))
 		}
 		sb.WriteString("\n")
 	}
